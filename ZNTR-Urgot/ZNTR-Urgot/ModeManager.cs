@@ -47,13 +47,13 @@ namespace ZNTR_Urgot {
             // KS with R, hitchance High
             if (Config.UltimateMenu["ksWithR"].Cast<CheckBox>().CurrentValue && Player.GetSpell(SpellSlot.R).IsLearned) {
                 if (Config.UltimateMenu["hitchanceR"].Cast<Slider>().CurrentValue == 1) {
-                    if (SpellManager.R.GetPrediction(selectedTarget).HitChance >= HitChance.High && ((selectedTarget.HealthPercent - DamageLibrary.GetSpellDamage(Program.Urgot, selectedTarget, SpellSlot.R)) <= 25)) {
+                    if (SpellManager.R.GetPrediction(selectedTarget).HitChance >= HitChance.High && selectedTarget.HealthPercent <= 25) {
                         SpellManager.R.Cast(SpellManager.R.GetPrediction(selectedTarget).CastPosition);
                         SpellManager.R.Cast(SpellManager.R.GetPrediction(selectedTarget).CastPosition); // gesund?
                     }
                 }
                 if (Config.UltimateMenu["hitchanceR"].Cast<Slider>().CurrentValue == 2) {
-                    if (SpellManager.R.GetPrediction(selectedTarget).HitChance >= HitChance.Immobile && ((selectedTarget.HealthPercent - DamageLibrary.GetSpellDamage(Program.Urgot, selectedTarget, SpellSlot.R)) <= 25)) {
+                    if (SpellManager.R.GetPrediction(selectedTarget).HitChance >= HitChance.Immobile && selectedTarget.HealthPercent<= 25) {
                         SpellManager.R.Cast(SpellManager.R.GetPrediction(selectedTarget).CastPosition);
                         SpellManager.R.Cast(SpellManager.R.GetPrediction(selectedTarget).CastPosition); // gesund?
                     }
