@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu.Values;
@@ -16,10 +18,15 @@ namespace ZNTR_Urgot {
             Loading.OnLoadingComplete += OnLoadingComplete;
         }
 
+
+       
+
         private static void OnLoadingComplete(EventArgs args) {
             if (Urgot.Hero != Champion.Urgot) {
                 return;
             }
+
+         
 
             Config.Initialize();
             SpellManager.Initialize();
@@ -28,22 +35,40 @@ namespace ZNTR_Urgot {
             Drawing.OnDraw += OnDraw;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Obj_AI_Base.OnSpellCast += Obj_AI_Base_OnSpellCast;
-            MissileClient.OnCreate += MissileClient_OnCreate;
-            Obj_SpellMissile.OnCreate += Obj_SpellMissile_OnCreate;
+            //GameObject.OnCreate += MissileClient_OnCreate;
 
+            GameObject.OnCreate += GameObject_OnCreate;
+            GameObject.OnDelete += GameObject_OnDelete;
 
 
         }
 
-        private static void Obj_SpellMissile_OnCreate(GameObject sender, EventArgs args) {
-            if (sender.IsMe) {
-                Console.WriteLine("MEOWOWOW:");
+        private static List<Obj_GeneralParticleEmitter> UrgotLegs = new List<Obj_GeneralParticleEmitter>();
+
+        private static void GameObject_OnCreate(GameObject sender, EventArgs args) {
+            var particle = sender as Obj_GeneralParticleEmitter;
+
+            if (particle == null)
+                return;
+            if (!particle.Name.Equals("Urgot_Base_Passive_Ready_Glow.troy") && !particle.Name.Equals("Urgot_Base_Passive_Ready_Glow_Flipped.troy"))
+                return;
+
+            UrgotLegs.Add(particle);
+
+        }
+
+        private static void GameObject_OnDelete(GameObject sender, EventArgs args) {
+            var particle = sender as Obj_GeneralParticleEmitter;
+            if (UrgotLegs.Contains(particle)) {
+                UrgotLegs.RemoveAll(s => s.Equals(particle));
             }
         }
 
 
+
         // Code zum getten von SpellData!
         private static void MissileClient_OnCreate(GameObject sender, EventArgs args) {
+
             var missile = sender as MissileClient;
 
             if (missile != null && missile.SpellCaster.IsMe) {
@@ -59,9 +84,6 @@ namespace ZNTR_Urgot {
                 Console.WriteLine("Delay " + missile.SData.CastTime);
                 Console.WriteLine("CastRange " + missile.SData.CastRange);
                 Console.WriteLine("CastRangeOverride " + missile.SData.CastRangeDisplayOverride);
-
-
-
             }
         }
 
@@ -72,14 +94,28 @@ namespace ZNTR_Urgot {
 
         // Bei ausführung eines Spells
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args) {
-
-            if (sender.IsMe) {
-                var spell = args.SData;
-                if (spell == null) { return; }
-                Console.WriteLine("Spell: " + spell.Name + ", AmmoRechargeTime: " + args.SData.AmmoRechargeTime);
-                Console.WriteLine("-------------------------------");
-            }
+            if (!sender.IsMe)
+                return;
+            /*
+            // args.SData.DisplayName;
+            var spell = args.SData;
+            if (spell == null) { return; }
+            Console.WriteLine("Spell: " + spell.Name);
+            Console.WriteLine("DisplayName: " + spell.DisplayName);
+            Console.WriteLine("AlternateName: " + spell.AlternateName);
+            Console.WriteLine("AmmoCountHiddenInUI: " + spell.AmmoCountHiddenInUI);
+            Console.WriteLine("AnimationName: " + spell.AnimationName);
+            Console.WriteLine("MissileEffectPlayerName: " + spell.MissileEffectPlayerName);
+            Console.WriteLine("MissileEffectName: " + spell.MissileEffectName);
+            Console.WriteLine("-------------------------------");*/
         }
+
+
+        static float highestX = -200;
+        static float highestY = -200;
+        static float lowestX = 200;
+        static float lowestY = 200;
+
 
         private static void OnDraw(EventArgs args) {
             if (Urgot.IsDead) {
@@ -105,7 +141,7 @@ namespace ZNTR_Urgot {
 
             // LEG DIRECTIONS + HALF SHIT THINGY STUFF AREA K?
             Vector3 vec1 = Vector3.Lerp(vector3PlayerEnd1, vector3PlayerEnd2, 0.5f);
-            Vector3 vec2 = Vector3.Lerp(vector3PlayerEnd2, vector3PlayerEnd3, 0.5f);    
+            Vector3 vec2 = Vector3.Lerp(vector3PlayerEnd2, vector3PlayerEnd3, 0.5f);
             Vector3 vec3 = Vector3.Lerp(vector3PlayerEnd3, vector3PlayerEnd4, 0.5f);
             Vector3 vec4 = Vector3.Lerp(vector3PlayerEnd4, vector3PlayerEnd5, 0.5f);
             Vector3 vec5 = Vector3.Lerp(vector3PlayerEnd5, vector3PlayerEnd6, 0.5f);
@@ -118,27 +154,84 @@ namespace ZNTR_Urgot {
             Vector3 legDirectionShort4 = new Vector3(Player.Instance.Position.X + (110), Player.Instance.Position.Y + (-405), Player.Instance.Position.Z);
             Vector3 legDirectionShort5 = new Vector3(Player.Instance.Position.X + (-298), Player.Instance.Position.Y + (-298), Player.Instance.Position.Z);
             Vector3 legDirectionShort6 = new Vector3(Player.Instance.Position.X + (-410), Player.Instance.Position.Y + (110), Player.Instance.Position.Z);
-            
+
             // Write MouseData compared to PlayerPos
             //Vector2 currMouse = new Vector2(Game.ActiveCursorPos.X, Game.ActiveCursorPos.Y);
             //Vector2 currMouseToPlayer = new Vector2(Game.ActiveCursorPos.X - Player.Instance.Position.X, Game.ActiveCursorPos.Y - Player.Instance.Position.Y);
-            //Console.WriteLine("Mausdaten: X -> " + currMouseToPlayer.X + " --- Y -> " + currMouseToPlayer.Y);
+            //Drawing.DrawText(Drawing.WorldToScreen(Player.Instance.Position) - new Vector2(30, -30), System.Drawing.Color.Red, "Mausdaten: X -> " + currMouseToPlayer.X + " --- Y -> " + currMouseToPlayer.Y, 10);
 
 
+            if (Config.DrawMenu["LegTriggerArea"].Cast<CheckBox>().CurrentValue && !Player.Instance.IsRecalling()) {
+                foreach (var leg in UrgotLegs)
+                {
+                    //var currPlayer = Player.Instance.Position;
+                    var lagOffset = leg.Position - Player.Instance.Position;
 
-            if (Config.DrawMenu["LegTriggerArea"].Cast<CheckBox>().CurrentValue) {
-                // Leg1 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec1);
-                // Leg2 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec2);
-                // Leg3 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec3);
-                // Leg4 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec4);
-                // Leg5 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec5);
-                // Leg6 + halber umfang eines sechstels
-                EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.White, 1f, vector3PlayerStart, vec6);
+                    //Console.WriteLine(leg.Position - Player.Instance.Position);
+
+            
+                    // Bein 1
+                    if ((lagOffset.X >= -70.0f && lagOffset.X <= 25) &&
+                        (lagOffset.Y >= 35 && lagOffset.Y <= 135)) {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec6);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec1);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec6, vec1);
+
+                    }
+                    // Bein 2
+                    if ((lagOffset.X >= 25 && lagOffset.X <= 110) &&
+                        (lagOffset.Y >= 10 && lagOffset.Y <= 115))
+                    {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec1);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec2);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec1, vec2);
+
+                    }
+                    // Bein 3 
+                    if ((lagOffset.X >= 30 && lagOffset.X <= 130) &&
+                        (lagOffset.Y >= -70 && lagOffset.Y <= 15)) {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec2);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec3);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec2, vec3);
+
+                    }
+                    // Bein 4
+                    if ((lagOffset.X >= -35 && lagOffset.X <= 75) &&
+                        (lagOffset.Y >= -125 && lagOffset.Y <= -25)) {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec3);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec4);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec3, vec4);
+
+                    }
+
+                    // Bein 5
+                    if ((lagOffset.X >= -125 && lagOffset.X <= -15) &&
+                        (lagOffset.Y >= -125 && lagOffset.Y <= -10)) {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec4);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart, vec5);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec4, vec5);
+
+                    }
+
+                    // Bein 6 fixed
+                    if ((lagOffset.X >= -135 && lagOffset.X <= -50) &&
+                        (lagOffset.Y >= -35 && lagOffset.Y <= 75))
+                    {
+
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart,
+                            vec5);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vector3PlayerStart,
+                            vec6);
+                        EloBuddy.SDK.Rendering.Line.DrawLine(System.Drawing.Color.LightGreen, 3f, vec5, vec6);
+
+                    }
+                }
+              
             }
 
             if (Config.DrawMenu["LegDirection"].Cast<CheckBox>().CurrentValue) {
@@ -179,7 +272,7 @@ namespace ZNTR_Urgot {
             }
 
             if (Config.DrawMenu["drawW"].Cast<CheckBox>().CurrentValue && Player.GetSpell(SpellSlot.W).IsLearned) {
-                EloBuddy.SDK.Rendering.Circle.Draw(SharpDX.Color.Red, SpellManager.W.Range, Player.Instance);
+                EloBuddy.SDK.Rendering.Circle.Draw(Color.Red, SpellManager.W.Range, Player.Instance);
             }
 
             if (Config.DrawMenu["drawE"].Cast<CheckBox>().CurrentValue && Player.GetSpell(SpellSlot.E).IsLearned) {

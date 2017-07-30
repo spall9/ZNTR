@@ -68,12 +68,12 @@ namespace ZNTR_Urgot
             // DrawMenu Child
             DrawMenu = UrgotMenu.AddSubMenu("Drawings", "Drawings");
             DrawMenu.Add("AutoAttackRange", new CheckBox("Draw Attack Range"));
-            DrawMenu.Add("DrawQ", new CheckBox("Draw Q range"));
-            DrawMenu.Add("DrawW", new CheckBox("Draw W range"));
-            DrawMenu.Add("DrawE", new CheckBox("Draw E range"));
+            DrawMenu.Add("DrawQ", new CheckBox("Draw Q range", false));
+            DrawMenu.Add("DrawW", new CheckBox("Draw W range", false));
+            DrawMenu.Add("DrawE", new CheckBox("Draw E range", false));
             DrawMenu.Add("DrawR", new CheckBox("Draw R range"));
             DrawMenu.Add("LegTriggerArea", new CheckBox("Draw Leg Trigger Area"));
-            DrawMenu.Add("LegDirection", new CheckBox("Draw Leg Direction"));
+            DrawMenu.Add("LegDirection", new CheckBox("Draw Leg Direction", false));
             //DrawMenu.Add("DrawWpred", new CheckBox("Draw Q prediction"));
         }
 

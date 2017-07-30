@@ -19,7 +19,7 @@ namespace ZNTR_Urgot {
             Modes.AddRange(new ModeBase[]
             {
                 //new LaneClear(),
-                new Combo(), 
+                new Combo(),
                 new Harass(),
                 //new Ignite(), 
             });
@@ -32,7 +32,15 @@ namespace ZNTR_Urgot {
         }
 
         private static void OnTick(EventArgs args) {
-
+            /*
+            foreach (var buff in Program.Urgot.Buffs) {
+                Console.WriteLine("BuffName: {0}, displayname: {1}, start: {2}, end {3}", buff.Name, buff.DisplayName, buff.StartTime, buff.IsActive);
+                if (buff.Name.ToString().Contains("UrgotPassiveZone1"))
+                {
+                   
+                }
+               
+            }*/
 
             var enemies = EntityManager.Heroes.Enemies.Where(n => n.IsValidTarget(SpellManager.R.Range));
             var selectedTarget = TargetSelector.GetTarget(SpellManager.R.Range, DamageType.Physical);
@@ -41,6 +49,11 @@ namespace ZNTR_Urgot {
             if (selectedTarget == null && !enemies.Any()) {
                 return;
             }
+
+
+
+           
+
 
             //Drawing.DrawLine(Drawing.WorldToScreen(Player.Instance.Position), Drawing.WorldToScreen(selectedTarget.Position), 4f, System.Drawing.Color.Green);
 
